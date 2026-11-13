@@ -24,11 +24,10 @@ import com.editstudio.app.domain.AudioReactiveConfig
 import com.editstudio.app.domain.Layer
 import com.editstudio.app.ui.components.AppPrimaryButton
 import com.editstudio.app.ui.components.SliderRow
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioGoldenAmber
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
 
 @Composable
 fun AudioSheet(
@@ -42,7 +41,7 @@ fun AudioSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(StudioSurface)
+            .background(NavySurface)
             .padding(16.dp)
     ) {
         Row(
@@ -53,15 +52,14 @@ fun AudioSheet(
             Text(
                 text = "Audio & Beat Reactive Motion",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
+                color = NavyTextPrimary,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimary)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = NavyTextPrimary)
             }
         }
 
-        // Beat Sync Marker Button
         AppPrimaryButton(
             text = "Automatic Beat Sync (Markers Lagao)",
             icon = Icons.Default.GraphicEq,
@@ -73,11 +71,10 @@ fun AudioSheet(
             modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
         )
 
-        // Audio Reactive Targets
         Text(
             text = "React to Audio Targets (Music par nachao)",
             style = MaterialTheme.typography.titleSmall,
-            color = StudioCyberCyan,
+            color = NavyPrimary,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 14.dp, bottom = 6.dp)
         )
@@ -94,7 +91,7 @@ fun AudioSheet(
                     }
                 },
                 label = { Text("Scale Pulse") },
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = StudioNeonPurple)
+                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = NavyPrimaryDeep)
             )
             FilterChip(
                 selected = audioReactive.targetShake,
@@ -104,7 +101,7 @@ fun AudioSheet(
                     }
                 },
                 label = { Text("Bass Shake") },
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = StudioNeonPurple)
+                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = NavyPrimaryDeep)
             )
             FilterChip(
                 selected = audioReactive.targetOpacity,
@@ -114,12 +111,12 @@ fun AudioSheet(
                     }
                 },
                 label = { Text("Strobe Opacity") },
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = StudioNeonPurple)
+                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = NavyPrimaryDeep)
             )
         }
 
         SliderRow(
-            label = "Sensitivity (Sensitivity Badhao)",
+            label = "Sensitivity (Badhao)",
             value = audioReactive.sensitivity,
             onValueChange = {
                 if (selectedLayer != null) {

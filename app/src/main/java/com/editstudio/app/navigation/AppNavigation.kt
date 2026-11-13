@@ -1,11 +1,11 @@
 package com.editstudio.app.navigation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -15,12 +15,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -34,21 +32,24 @@ import com.editstudio.app.domain.FrameRate
 import com.editstudio.app.domain.VideoResolution
 import com.editstudio.app.ui.editor.EditorScreen
 import com.editstudio.app.ui.editor.EditorViewModel
+import com.editstudio.app.ui.home.CreateHubScreen
 import com.editstudio.app.ui.home.HomeScreen
 import com.editstudio.app.ui.home.HomeViewModel
+import com.editstudio.app.ui.home.SettingsScreen
 import com.editstudio.app.ui.store.StoreScreen
 import com.editstudio.app.ui.store.StoreViewModel
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioDarkBg
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyBg
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
-sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    data object Projects : Screen("projects", "Projects", Icons.Default.Folder)
+sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
+    data object Create : Screen("create", "Create", Icons.Default.AddCircle)
     data object Store : Screen("store", "Store", Icons.Default.ShoppingBag)
+    data object Projects : Screen("projects", "Projects", Icons.Default.Folder)
+    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
     data object Editor : Screen("editor/{projectId}", "Editor", Icons.Default.AddCircle) {
         fun createRoute(projectId: String) = "editor/$projectId"
     }
@@ -67,14 +68,14 @@ fun AppNavigation(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = StudioDarkBg,
+        containerColor = NavyBg,
         bottomBar = {
             if (!isEditorActive) {
                 NavigationBar(
-                    containerColor = StudioSurface,
-                    contentColor = TextPrimary
+                    containerColor = NavySurface,
+                    contentColor = NavyTextPrimary
                 ) {
-                    val bottomItems = listOf(Screen.Projects, Screen.Store)
+                    val bottomItems = listOf(Screen.Create, Screen.Store, Screen.Projects, Screen.Settings)
                     bottomItems.forEach { screen ->
                         val isSelected = currentRoute == screen.route
                         NavigationBarItem(
@@ -91,11 +92,11 @@ fun AppNavigation(
                             icon = { Icon(screen.icon, contentDescription = screen.title) },
                             label = { Text(screen.title) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = StudioCyberCyan,
-                                selectedTextColor = StudioCyberCyan,
-                                indicatorColor = StudioNeonPurple.copy(alpha = 0.25f),
-                                unselectedIconColor = TextSecondary,
-                                unselectedTextColor = TextSecondary
+                                selectedIconColor = NavyPrimary,
+                                selectedTextColor = NavyPrimary,
+                                indicatorColor = NavyPrimaryDeep.copy(alpha = 0.28f),
+                                unselectedIconColor = NavyTextSecondary,
+                                unselectedTextColor = NavyTextSecondary
                             )
                         )
                     }
@@ -108,6 +109,16 @@ fun AppNavigation(
             startDestination = Screen.Projects.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Screen.Create.route) {
+                val homeViewModel = remember { HomeViewModel(context) }
+                CreateHubScreen(
+                    viewModel = homeViewModel,
+                    onOpenProject = { projectId ->
+                        navController.navigate(Screen.Editor.createRoute(projectId))
+                    }
+                )
+            }
+
             composable(Screen.Projects.route) {
                 val homeViewModel = remember { HomeViewModel(context) }
                 HomeScreen(
@@ -133,6 +144,11 @@ fun AppNavigation(
                         navController.navigate(Screen.Editor.createRoute(newId))
                     }
                 )
+            }
+
+            composable(Screen.Settings.route) {
+                val homeViewModel = remember { HomeViewModel(context) }
+                SettingsScreen(settingsStore = homeViewModel.settingsStore)
             }
 
             composable(

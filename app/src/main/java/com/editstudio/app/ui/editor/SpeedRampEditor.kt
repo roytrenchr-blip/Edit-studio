@@ -7,8 +7,8 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -41,18 +41,19 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.editstudio.app.domain.Layer
-import com.editstudio.app.domain.SpeedPoint
 import com.editstudio.app.domain.SpeedRampConfig
 import com.editstudio.app.domain.SpeedRampPreset
 import com.editstudio.app.motion.SpeedRamp
 import com.editstudio.app.ui.components.AppPrimaryButton
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioGoldenAmber
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyAccentTeal
+import com.editstudio.app.ui.theme.NavyAmber
+import com.editstudio.app.ui.theme.NavyBg
+import com.editstudio.app.ui.theme.NavyBorder
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
 @Composable
 fun SpeedRampEditor(
@@ -66,7 +67,7 @@ fun SpeedRampEditor(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(StudioSurface)
+            .background(NavySurface)
             .padding(16.dp)
     ) {
         Row(
@@ -77,19 +78,18 @@ fun SpeedRampEditor(
             Text(
                 text = "Speed Ramp & Frame Blending",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
+                color = NavyTextPrimary,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimary)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = NavyTextPrimary)
             }
         }
 
-        // Preset Chips
         Text(
             text = "Speed Curve Presets (0.1x se 10x)",
             style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
+            color = NavyTextSecondary,
             modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
         )
         LazyRow(
@@ -105,28 +105,27 @@ fun SpeedRampEditor(
                     },
                     label = { Text(preset.displayName) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = StudioNeonPurple,
+                        selectedContainerColor = NavyPrimaryDeep,
                         selectedLabelColor = Color.White
                     )
                 )
             }
         }
 
-        // Interactive Speed Curve Canvas
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF0F0E18))
-                .border(1.dp, StudioBorder, RoundedCornerShape(12.dp))
+                .background(NavyBg)
+                .border(1.dp, NavyBorder, RoundedCornerShape(12.dp))
                 .pointerInput(config.points) {
                     detectDragGestures { change, _ ->
                         val w = size.width.toFloat()
                         val h = size.height.toFloat()
                         val nx = (change.position.x / w).coerceIn(0f, 1f)
                         val ny = (1f - (change.position.y / h)).coerceIn(0f, 1f)
-                        val speedMult = ny * 10f // 0 to 10x
+                        val speedMult = ny * 10f
                         val updated = config.points.map { pt ->
                             if (kotlin.math.abs(pt.normalizedTime - nx) < 0.2f) {
                                 pt.copy(speedMultiplier = speedMult)
@@ -140,9 +139,8 @@ fun SpeedRampEditor(
                 val w = size.width
                 val h = size.height
 
-                // Center 1.0x baseline
                 val baseLineY = h - (1f / 10f * h)
-                drawLine(color = StudioBorder, start = Offset(0f, baseLineY), end = Offset(w, baseLineY), strokeWidth = 1.5f)
+                drawLine(color = NavyBorder, start = Offset(0f, baseLineY), end = Offset(w, baseLineY), strokeWidth = 1.5f)
 
                 val sorted = config.points.sortedBy { it.normalizedTime }
                 if (sorted.size >= 2) {
@@ -152,28 +150,27 @@ fun SpeedRampEditor(
                         val py = h - ((sorted[i].speedMultiplier / 10f).coerceIn(0f, 1f) * h)
                         if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
                     }
-                    drawPath(path = path, color = StudioCyberCyan, style = Stroke(width = 3.5f))
+                    drawPath(path = path, color = NavyPrimary, style = Stroke(width = 3.5f))
 
                     for (pt in sorted) {
                         val px = pt.normalizedTime * w
                         val py = h - ((pt.speedMultiplier / 10f).coerceIn(0f, 1f) * h)
-                        drawCircle(color = StudioGoldenAmber, radius = 7f, center = Offset(px, py))
+                        drawCircle(color = NavyAmber, radius = 7f, center = Offset(px, py))
                     }
                 }
             }
         }
 
-        // Toggles: Optical Flow Frame Blending & Reverse Video
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Optical Flow Frame Blending", color = TextPrimary)
+            Text("Optical Flow Frame Blending", color = NavyTextPrimary)
             Switch(
                 checked = config.opticalFlowBlending,
                 onCheckedChange = { config = config.copy(opticalFlowBlending = it) },
-                colors = SwitchDefaults.colors(checkedThumbColor = StudioCyberCyan)
+                colors = SwitchDefaults.colors(checkedThumbColor = NavyAccentTeal)
             )
         }
 
@@ -182,11 +179,11 @@ fun SpeedRampEditor(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Reverse Playback (Ulta Chalao)", color = TextPrimary)
+            Text("Reverse Playback (Ulta Chalao)", color = NavyTextPrimary)
             Switch(
                 checked = config.isReversed,
                 onCheckedChange = { config = config.copy(isReversed = it) },
-                colors = SwitchDefaults.colors(checkedThumbColor = StudioGoldenAmber)
+                colors = SwitchDefaults.colors(checkedThumbColor = NavyAmber)
             )
         }
 

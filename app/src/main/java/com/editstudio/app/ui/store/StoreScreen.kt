@@ -29,19 +29,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.editstudio.app.store.StoreItem
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioDarkBg
-import com.editstudio.app.ui.theme.StudioGoldenAmber
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyAmber
+import com.editstudio.app.ui.theme.NavyBg
+import com.editstudio.app.ui.theme.NavyBorder
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,21 +54,20 @@ fun StoreScreen(
     val filteredItems = state.items.filter { item ->
         val matchesCategory = state.selectedCategory == "All" || item.category == state.selectedCategory
         val matchesQuery = state.searchQuery.isBlank() ||
-                item.name.contains(state.searchQuery, ignoreCase = true) ||
-                item.description.contains(state.searchQuery, ignoreCase = true)
+            item.name.contains(state.searchQuery, ignoreCase = true) ||
+            item.description.contains(state.searchQuery, ignoreCase = true)
         matchesCategory && matchesQuery
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(StudioDarkBg)
+            .background(NavyBg)
     ) {
-        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(StudioSurface)
+                .background(NavySurface)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -79,62 +76,59 @@ fun StoreScreen(
                 Text(
                     text = "Edit Studio Store",
                     style = MaterialTheme.typography.titleLarge,
-                    color = TextPrimary,
+                    color = NavyTextPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Motion Packs, LUTs, Templates & Effects",
                     style = MaterialTheme.typography.bodySmall,
-                    color = StudioCyberCyan
+                    color = NavyPrimary
                 )
             }
             IconButton(onClick = { viewModel.loadManifest() }) {
-                Icon(Icons.Default.Refresh, contentDescription = "Refresh Karein", tint = TextPrimary)
+                Icon(Icons.Default.Refresh, contentDescription = "Refresh Karein", tint = NavyTextPrimary)
             }
         }
 
-        // Offline Notification Banner
         if (state.isOffline) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(StudioGoldenAmber.copy(alpha = 0.15f))
+                    .background(NavyAmber.copy(alpha = 0.15f))
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.CloudOff, contentDescription = null, tint = StudioGoldenAmber)
+                Icon(Icons.Default.CloudOff, contentDescription = null, tint = NavyAmber)
                 Text(
                     text = "Aap offline hain! Cached starter library dikhayi ja rahi hai.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = StudioGoldenAmber,
+                    color = NavyAmber,
                     fontWeight = FontWeight.Medium
                 )
             }
         }
 
-        // Search Bar
         OutlinedTextField(
             value = state.searchQuery,
             onValueChange = { viewModel.setSearchQuery(it) },
-            placeholder = { Text("Store mein khojein...", color = TextSecondary) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
+            placeholder = { Text("Store mein khojein...", color = NavyTextSecondary) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = NavyTextSecondary) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = StudioCyberCyan,
-                unfocusedBorderColor = StudioBorder
+                focusedBorderColor = NavyPrimary,
+                unfocusedBorderColor = NavyBorder
             )
         )
 
-        // Categories Tab Row
         val selectedIndex = viewModel.categories.indexOf(state.selectedCategory).coerceAtLeast(0)
         ScrollableTabRow(
             selectedTabIndex = selectedIndex,
-            containerColor = StudioSurface,
-            contentColor = StudioCyberCyan,
+            containerColor = NavySurface,
+            contentColor = NavyPrimary,
             edgePadding = 16.dp
         ) {
             viewModel.categories.forEachIndexed { index, cat ->
@@ -145,17 +139,16 @@ fun StoreScreen(
                         Text(
                             text = cat,
                             fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedIndex == index) StudioCyberCyan else TextSecondary
+                            color = if (selectedIndex == index) NavyPrimary else NavyTextSecondary
                         )
                     }
                 )
             }
         }
 
-        // Content List
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = StudioNeonPurple)
+                CircularProgressIndicator(color = NavyPrimary)
             }
         } else {
             LazyColumn(

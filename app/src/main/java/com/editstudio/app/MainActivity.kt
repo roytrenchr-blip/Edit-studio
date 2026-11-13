@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.editstudio.app.navigation.AppNavigation
 import com.editstudio.app.ui.theme.EditStudioTheme
-import com.editstudio.app.ui.theme.StudioDarkBg
+import com.editstudio.app.ui.theme.NavyBg
 
 class MainActivity : ComponentActivity() {
 
@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
             EditStudioTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = StudioDarkBg
+                    color = NavyBg
                 ) {
                     val permissionsLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.RequestMultiplePermissions()

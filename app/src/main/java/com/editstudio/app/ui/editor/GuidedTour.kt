@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Button
@@ -37,12 +36,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCard
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyAccentTeal
+import com.editstudio.app.ui.theme.NavyBorder
+import com.editstudio.app.ui.theme.NavyCard
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
 data class TourStep(
     val title: String,
@@ -58,22 +58,22 @@ fun GuidedTour(
     val steps = listOf(
         TourStep(
             title = "Swagat Hai Edit Studio Mein!",
-            description = "Ye ek professional native video aur motion graphics editor hai. Har button ko long-press karke Hinglish tooltip dekh sakte hain.",
+            description = "Upar project naam tap karke rename karein, aur beech mein transparent checkerboard preview dekhein.",
             icon = Icons.Default.PlayArrow
         ),
         TourStep(
-            title = "Timeline Par Control",
-            description = "Neeche compact timeline hai. Do ungliyon se pinch karke zoom karein aur red playhead ko drag karke kisi bhi frame par jayein.",
+            title = "Center Playhead Timeline",
+            description = "Timeline mein playhead beech mein fixed hai — layers ko swipe karein, edges se trim karein, aur '+' dabakar naya element add karein.",
             icon = Icons.Default.Timeline
         ),
         TourStep(
-            title = "One-Tap Motion Presets",
-            description = "Bottom toolbar se 'Motion' ya 'Effects' tap karein. Har preset ka live animated thumbnail dikhega - sirf ek tap mein apply ho jayega!",
+            title = "One-Tap Effects & Motion",
+            description = "Kisi bhi layer par tap karein — neeche Properties Grid khul jayega. Effects aur Motion browser mein har preset ka live preview milega.",
             icon = Icons.Default.Animation
         ),
         TourStep(
             title = "Simple vs Pro Mode",
-            description = "Upar switch se Simple Mode (sliders) ya Pro Mode (keyframes, bezier curves, masks aur 3D camera) mein switch karein.",
+            description = "Top bar mein Simple/Pro switch se aasan sliders ya Keyframe Diamonds & Bezier Curves chalu karein.",
             icon = Icons.Default.AutoAwesome
         )
     )
@@ -92,26 +92,25 @@ fun GuidedTour(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(StudioCard)
-                .border(1.dp, StudioBorder, RoundedCornerShape(20.dp))
+                .background(NavyCard)
+                .border(1.dp, NavyBorder, RoundedCornerShape(20.dp))
                 .padding(24.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Step Indicator badge
                 Box(
                     modifier = Modifier
                         .size(60.dp)
                         .clip(CircleShape)
-                        .background(StudioNeonPurple.copy(alpha = 0.25f)),
+                        .background(NavyPrimaryDeep.copy(alpha = 0.35f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = step.icon,
                         contentDescription = null,
-                        tint = StudioCyberCyan,
+                        tint = NavyPrimary,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -119,14 +118,14 @@ fun GuidedTour(
                 Text(
                     text = "Step ${currentStep + 1} of 4",
                     style = MaterialTheme.typography.labelSmall,
-                    color = StudioCyberCyan,
+                    color = NavyAccentTeal,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
                     text = step.title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
+                    color = NavyTextPrimary,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -134,18 +133,17 @@ fun GuidedTour(
                 Text(
                     text = step.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
+                    color = NavyTextSecondary,
                     textAlign = TextAlign.Center
                 )
 
-                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Skip Tour", color = TextSecondary)
+                        Text("Skip Tour", color = NavyTextSecondary)
                     }
 
                     Button(
@@ -156,7 +154,7 @@ fun GuidedTour(
                                 onDismiss()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = StudioNeonPurple)
+                        colors = ButtonDefaults.buttonColors(containerColor = NavyPrimaryDeep)
                     ) {
                         Text(if (currentStep == steps.size - 1) "Samajh Gaya!" else "Aage (Next)")
                     }

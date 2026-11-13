@@ -4,54 +4,37 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.Redo
-import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.editstudio.app.domain.LayerType
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioDarkBg
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.home.SettingsDialog
+import com.editstudio.app.ui.store.StoreViewModel
+import com.editstudio.app.ui.theme.NavyBg
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,18 +43,38 @@ fun EditorScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val exportProgress by viewModel.exportProgress.collectAsStateWithLifecycle()
+    val storeViewModel = remember { StoreViewModel(context) }
+    val storeState by storeViewModel.uiState.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val selectedLayer = state.project.layers.firstOrNull { it.id == state.selectedLayerId }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var renameInput by remember(state.project.name) { mutableStateOf(state.project.name) }
 
-    // Visual media picker (Zero permission Android Photo & Video Picker)
+    val selectedLayer = state.project.layers.firstOrNull { it.id == state.selectedLayerId }
+    val hasBookmarkNearPlayhead = state.project.bookmarksMs.any { kotlin.math.abs(it - state.currentTimeMs) < 120L }
+
+    // Android Zero-Permission Photo & Video Picker ("All albums")
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            viewModel.addMediaLayer(uri.toString(), isVideo = true)
+            val mime = context.contentResolver.getType(uri) ?: ""
+            val isVideo = mime.startsWith("video")
+            viewModel.addMediaLayer(uri.toString(), isVideo = isVideo)
+        }
+    }
+
+    // Audio File Picker
+    val audioPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.addAudioLayer("Custom Audio", uri.toString())
         }
     }
 
@@ -82,115 +85,46 @@ fun EditorScreen(
         }
     }
 
+    LaunchedEffect(exportProgress.outputPath, exportProgress.error) {
+        exportProgress.outputPath?.let {
+            snackbarHostState.showSnackbar("Export complete! Gallery mein save ho gaya.")
+        }
+        exportProgress.error?.let {
+            snackbarHostState.showSnackbar("Export error: $it")
+        }
+    }
+
     BackHandler {
-        if (state.activeSheet != ActiveSheet.NONE) {
-            viewModel.closeSheet()
-        } else {
-            onNavigateBack()
+        when {
+            state.showEffectBrowser -> viewModel.closeEffectBrowser()
+            state.showMotionBrowser -> viewModel.closeMotionBrowser()
+            state.activeSheet != ActiveSheet.NONE -> viewModel.closeSheet()
+            state.isFullscreenPreview -> viewModel.toggleFullscreenPreview()
+            state.activePropertySubSheet != PropertySubSheet.NONE -> viewModel.closePropertySubSheet()
+            state.selectedLayerId != null -> viewModel.selectLayer(null)
+            else -> onNavigateBack()
         }
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = StudioDarkBg,
+        containerColor = NavyBg,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            // Editor Top Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(StudioSurface)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Peeche Jayein",
-                            tint = TextPrimary
-                        )
-                    }
-                    Column(modifier = Modifier.padding(start = 4.dp)) {
-                        Text(
-                            text = state.project.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = state.project.aspectRatio.displayName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = StudioCyberCyan
-                        )
-                    }
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Simple / Pro Mode Switch
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(StudioDarkBg)
-                            .padding(horizontal = 8.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (state.isSimpleMode) "Simple" else "Pro",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (state.isSimpleMode) StudioCyberCyan else StudioNeonPurple,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
-                        Switch(
-                            checked = !state.isSimpleMode,
-                            onCheckedChange = { viewModel.toggleSimpleMode() },
-                            colors = SwitchDefaults.colors(checkedThumbColor = StudioNeonPurple)
-                        )
-                    }
-
-                    // Layers Panel Toggle
-                    IconButton(onClick = { viewModel.openSheet(ActiveSheet.LAYERS) }) {
-                        Icon(
-                            imageVector = Icons.Default.Layers,
-                            contentDescription = "Layers Panel",
-                            tint = StudioCyberCyan
-                        )
-                    }
-
-                    // Export Button
-                    IconButton(
-                        onClick = { viewModel.openSheet(ActiveSheet.EXPORT) },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(StudioNeonPurple)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FileDownload,
-                            contentDescription = "Export Karein",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+            if (!state.isFullscreenPreview) {
+                TopBar(
+                    project = state.project,
+                    isSimpleMode = state.isSimpleMode,
+                    onNavigateBack = onNavigateBack,
+                    onRenameClick = {
+                        renameInput = state.project.name
+                        showRenameDialog = true
+                    },
+                    onToggleMode = { viewModel.toggleSimpleMode() },
+                    onOpenSettings = { viewModel.openSheet(ActiveSheet.SETTINGS) },
+                    onOpenExport = { viewModel.openSheet(ActiveSheet.EXPORT) }
+                )
             }
-        },
-        bottomBar = {
-            BottomToolbar(
-                activeSheet = state.activeSheet,
-                onOpenSheet = { sheet ->
-                    if (sheet == ActiveSheet.MEDIA) {
-                        mediaPickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                        )
-                    } else {
-                        viewModel.openSheet(sheet)
-                    }
-                }
-            )
         }
     ) { innerPadding ->
         Box(
@@ -199,17 +133,19 @@ fun EditorScreen(
                 .padding(innerPadding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Top Half: Preview View
+                // 2. PREVIEW
                 PreviewView(
                     project = state.project,
                     currentTimeMs = state.currentTimeMs,
                     selectedLayer = selectedLayer,
-                    onTransformChange = { layerId, dx, dy, scaleFactor, rotDelta ->
-                        val layer = state.project.layers.firstOrNull { it.id == layerId }
+                    isDrawingActive = state.isDrawingActive,
+                    isVectorDrawing = state.isVectorDrawing,
+                    onTransformChange = { id, dx, dy, scaleFactor, rotDelta ->
+                        val layer = state.project.layers.firstOrNull { it.id == id }
                         if (layer != null) {
                             val cur = layer.transform
                             viewModel.updateLayerTransform(
-                                layerId,
+                                id,
                                 cur.copy(
                                     x = cur.x + dx,
                                     y = cur.y + dy,
@@ -220,188 +156,259 @@ fun EditorScreen(
                             )
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    onTransformCommit = { viewModel.commitTransformSnapshot() },
+                    onAddDrawingStroke = { pts -> viewModel.addStrokeToActiveDrawing(pts) },
+                    onFinishDrawing = { viewModel.toggleDrawingMode(false) },
+                    modifier = Modifier.weight(if (state.isFullscreenPreview) 1f else 1.1f)
                 )
 
-                // Floating Layer Toolbar if a layer is selected
-                if (selectedLayer != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        FloatingLayerBar(
-                            onEdit = { viewModel.openSheet(ActiveSheet.PROPERTIES) },
-                            onMotion = { viewModel.openSheet(ActiveSheet.MOTION) },
-                            onEffects = { viewModel.openSheet(ActiveSheet.EFFECTS) },
-                            onSplit = { viewModel.splitSelectedLayer() },
-                            onDuplicate = { viewModel.duplicateSelectedLayer() },
-                            onDelete = { viewModel.deleteSelectedLayer() },
-                            onMore = {
-                                if (state.isSimpleMode) {
-                                    viewModel.openSheet(ActiveSheet.SPEED_RAMP)
-                                } else {
-                                    viewModel.openSheet(ActiveSheet.KEYFRAMES)
-                                }
-                            }
-                        )
-                    }
-                }
-
-                // Compact Multi-Track Timeline Below Preview
-                TimelineView(
-                    project = state.project,
-                    currentTimeMs = state.currentTimeMs,
+                // 3. PLAYBACK ROW directly below preview
+                PlaybackRow(
                     isPlaying = state.isPlaying,
-                    selectedLayerId = state.selectedLayerId,
+                    isLooping = state.isLooping,
+                    isFullscreen = state.isFullscreenPreview,
+                    hasBookmarkNearPlayhead = hasBookmarkNearPlayhead,
                     canUndo = state.canUndo,
                     canRedo = state.canRedo,
-                    zoomFactor = state.timelineZoom,
-                    onSeek = { viewModel.seekTo(it) },
-                    onTogglePlay = { viewModel.togglePlayPause() },
-                    onStepFrame = { viewModel.stepFrame(it) },
+                    hasSelectedLayer = selectedLayer != null,
                     onUndo = { viewModel.undo() },
                     onRedo = { viewModel.redo() },
-                    onSelectLayer = { viewModel.selectLayer(it) },
-                    onTrimLayer = { id, start, dur ->
-                        val layer = state.project.layers.firstOrNull { it.id == id }
-                        if (layer != null) {
-                            viewModel.updateLayer(layer.copy(startTimeMs = start, durationMs = dur))
-                        }
-                    },
-                    onZoomChange = { viewModel.setTimelineZoom(it) }
+                    onPrevKeyframe = { viewModel.jumpToAdjacentKeyframe(forward = false) },
+                    onTogglePlay = { viewModel.togglePlayPause() },
+                    onNextKeyframe = { viewModel.jumpToAdjacentKeyframe(forward = true) },
+                    onCopyLayer = { viewModel.duplicateSelectedLayer() },
+                    onToggleBookmark = { viewModel.toggleBookmarkAtPlayhead() },
+                    onToggleLoop = { viewModel.toggleLoop() },
+                    onToggleFullscreen = { viewModel.toggleFullscreenPreview() }
+                )
+
+                if (!state.isFullscreenPreview) {
+                    // 4. TIMELINE
+                    TimelinePanel(
+                        project = state.project,
+                        currentTimeMs = state.currentTimeMs,
+                        isPlaying = state.isPlaying,
+                        selectedLayerId = state.selectedLayerId,
+                        zoomFactor = state.timelineZoom,
+                        onSeek = { viewModel.seekTo(it) },
+                        onSelectLayer = { viewModel.selectLayer(it) },
+                        onMoveAndTrimLayer = { id, start, dur -> viewModel.moveAndTrimLayer(id, start, dur) },
+                        onCommitLayerChange = { viewModel.commitTransformSnapshot() },
+                        onReorderLayer = { id, up -> viewModel.reorderLayer(id, up) },
+                        onZoomChange = { viewModel.setTimelineZoom(it) },
+                        onOpenAddPanel = { viewModel.openAddPanel() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.75f)
+                    )
+
+                    // 5. BOTTOM PANEL (changes cleanly between AddPanel & PropertiesGrid/SubSheet)
+                    BottomPanelHost(
+                        selectedLayer = selectedLayer,
+                        isAddPanelVisible = state.isAddPanelVisible,
+                        activeAddTab = state.activeAddTab,
+                        activePropertySubSheet = state.activePropertySubSheet,
+                        currentTimeMs = state.currentTimeMs,
+                        isSimpleMode = state.isSimpleMode,
+                        activeEffectId = state.activeEffectId,
+                        activeMotionPresetIndex = state.activeMotionPresetIndex,
+                        recentMediaUris = state.recentMediaUris,
+                        storeItems = storeState.items,
+                        onSelectAddTab = { viewModel.selectAddTab(it) },
+                        onAddShape = { viewModel.addShapeLayer(it) },
+                        onPickAllAlbums = {
+                            mediaPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                            )
+                        },
+                        onPickAudioFile = {
+                            audioPickerLauncher.launch(arrayOf("audio/*"))
+                        },
+                        onAddMediaUri = { uri, isVideo, name ->
+                            viewModel.addMediaLayer(uri, isVideo, name)
+                        },
+                        onAddSpecialLayer = { type, name ->
+                            viewModel.addSpecialLayer(type, name)
+                        },
+                        onAddAudioTrack = { title, uri ->
+                            viewModel.addAudioLayer(title, uri)
+                        },
+                        onApplyTemplate = { name ->
+                            viewModel.applyStarterTemplate(name)
+                        },
+                        onAddFreehandDrawing = { viewModel.addDrawingLayer(isVector = false) },
+                        onAddVectorDrawing = { viewModel.addDrawingLayer(isVector = true) },
+                        onAddText = { viewModel.addTextLayer("Naya Text") },
+                        onDownloadStoreItem = { storeViewModel.downloadItem(it) },
+                        onCloseAddPanel = { viewModel.closeAddPanel() },
+                        onOpenPropertySubSheet = { viewModel.openPropertySubSheet(it) },
+                        onClosePropertySubSheet = { viewModel.closePropertySubSheet() },
+                        onOpenEffects = { viewModel.openEffectBrowser() },
+                        onOpenMotion = { viewModel.openMotionBrowser() },
+                        onOpenKeyframesSheet = { viewModel.openSheet(ActiveSheet.KEYFRAMES) },
+                        onOpenSpeedRampSheet = { viewModel.openSheet(ActiveSheet.SPEED_RAMP) },
+                        onOpenLayersSheet = { viewModel.openSheet(ActiveSheet.LAYERS) },
+                        onOpenAudioSheet = { viewModel.openSheet(ActiveSheet.AUDIO_EDIT) },
+                        onResumeDrawing = { viewModel.toggleDrawingMode(true) },
+                        onSplitSelected = { viewModel.splitSelectedLayer() },
+                        onDuplicateSelected = { viewModel.duplicateSelectedLayer() },
+                        onDeleteSelected = { viewModel.deleteSelectedLayer() },
+                        onUpdateLayer = { viewModel.updateLayer(it) },
+                        onToggleKeyframe = { prop, v -> viewModel.toggleKeyframeForSelected(prop, v) }
+                    )
+                }
+            }
+
+            // 6. Full-screen EFFECT BROWSER
+            if (state.showEffectBrowser) {
+                EffectBrowser(
+                    favoriteEffects = state.favoriteEffects,
+                    recentEffects = state.recentEffects,
+                    storeEffectPacks = storeState.items.filter { it.category == "Effect Packs" || it.category == "LUT Looks" },
+                    onSelectEffect = { viewModel.addEffectToSelected(it) },
+                    onToggleFavorite = { viewModel.toggleFavoriteEffect(it) },
+                    onDownloadStorePack = { storeViewModel.downloadItem(it) },
+                    onClose = { viewModel.closeEffectBrowser() }
                 )
             }
 
-            // Bottom Sheets
-            if (state.activeSheet != ActiveSheet.NONE) {
+            // 7. Full-screen MOTION BROWSER
+            if (state.showMotionBrowser) {
+                MotionBrowser(
+                    favoritePresets = state.favoritePresets,
+                    recentPresets = state.recentPresets,
+                    storeMotionPacks = storeState.items.filter { it.category == "Motion Packs" || it.category == "Transition Packs" },
+                    onSelectPreset = { viewModel.addMotionPresetToSelected(it) },
+                    onToggleFavorite = { viewModel.toggleFavoritePreset(it) },
+                    onOpenSpeedRamp = {
+                        viewModel.closeMotionBrowser()
+                        viewModel.openSheet(ActiveSheet.SPEED_RAMP)
+                    },
+                    onOpenPathEditor = {
+                        viewModel.closeMotionBrowser()
+                        viewModel.openSheet(ActiveSheet.PATH_EDITOR)
+                    },
+                    onOpenBeatSync = {
+                        viewModel.closeMotionBrowser()
+                        viewModel.openSheet(ActiveSheet.AUDIO_EDIT)
+                    },
+                    onDownloadStorePack = { storeViewModel.downloadItem(it) },
+                    onClose = { viewModel.closeMotionBrowser() }
+                )
+            }
+
+            // Modal Bottom Sheets for Advanced Editors & Export
+            if (state.activeSheet != ActiveSheet.NONE && state.activeSheet != ActiveSheet.SETTINGS) {
                 ModalBottomSheet(
                     onDismissRequest = { viewModel.closeSheet() },
                     sheetState = bottomSheetState,
-                    containerColor = StudioSurface
+                    containerColor = NavySurface
                 ) {
                     when (state.activeSheet) {
-                        ActiveSheet.MOTION -> {
-                            MotionSheet(
+                        ActiveSheet.LAYERS -> LayerPanel(
+                            project = state.project,
+                            selectedLayerId = state.selectedLayerId,
+                            onSelectLayer = { viewModel.selectLayer(it) },
+                            onUpdateLayer = { viewModel.updateLayer(it) },
+                            onClose = { viewModel.closeSheet() }
+                        )
+                        ActiveSheet.KEYFRAMES -> if (selectedLayer != null) {
+                            KeyframeEditor(
                                 layer = selectedLayer,
-                                onApplyMotion = { viewModel.addMotionPresetToSelected(it) },
+                                currentTimeMs = state.currentTimeMs,
+                                onUpdateLayer = { viewModel.updateLayer(it) },
+                                onOpenCurveEditor = { viewModel.openSheet(ActiveSheet.CURVE_EDITOR) },
                                 onClose = { viewModel.closeSheet() }
                             )
                         }
-                        ActiveSheet.EFFECTS -> {
-                            EffectsSheet(
+                        ActiveSheet.CURVE_EDITOR -> if (selectedLayer != null) {
+                            CurveEditor(
                                 layer = selectedLayer,
-                                onAddEffect = { viewModel.addEffectToSelected(it) },
-                                onRemoveEffect = { viewModel.removeEffectFromSelected(it) },
-                                onUpdateEffect = { eff ->
-                                    if (selectedLayer != null) {
-                                        val updatedEffects = selectedLayer.effects.map { if (it.id == eff.id) eff else it }
-                                        viewModel.updateLayer(selectedLayer.copy(effects = updatedEffects))
+                                onApplyCurve = { bezier ->
+                                    val updatedTracks = selectedLayer.keyframeTracks.map { tr ->
+                                        tr.copy(keyframes = tr.keyframes.map { kf ->
+                                            kf.copy(easing = com.editstudio.app.domain.EasingType.BEZIER_CUSTOM, bezier = bezier)
+                                        })
                                     }
+                                    viewModel.updateLayer(selectedLayer.copy(keyframeTracks = updatedTracks))
                                 },
                                 onClose = { viewModel.closeSheet() }
                             )
                         }
-                        ActiveSheet.TEXT -> {
-                            TextSheet(
-                                layer = if (selectedLayer?.type == LayerType.TEXT) selectedLayer else null,
-                                onAddText = {
-                                    viewModel.addTextLayer(it)
-                                    viewModel.closeSheet()
-                                },
-                                onUpdateLayer = { viewModel.updateLayer(it) },
+                        ActiveSheet.SPEED_RAMP -> if (selectedLayer != null) {
+                            SpeedRampEditor(
+                                layer = selectedLayer,
+                                onUpdateSpeedRamp = { viewModel.updateLayer(selectedLayer.copy(speedRamp = it)) },
                                 onClose = { viewModel.closeSheet() }
                             )
                         }
-                        ActiveSheet.SHAPES -> {
-                            ShapesSheet(
-                                onAddShape = {
-                                    viewModel.addShapeLayer(it)
-                                    viewModel.closeSheet()
-                                },
+                        ActiveSheet.PATH_EDITOR -> if (selectedLayer != null) {
+                            PathEditor(
+                                layer = selectedLayer,
+                                onUpdatePath = { viewModel.updateLayer(selectedLayer.copy(pathAnimation = it)) },
                                 onClose = { viewModel.closeSheet() }
                             )
                         }
-                        ActiveSheet.AUDIO -> {
-                            AudioSheet(
-                                selectedLayer = selectedLayer,
-                                onUpdateLayer = { viewModel.updateLayer(it) },
-                                onClose = { viewModel.closeSheet() }
-                            )
-                        }
-                        ActiveSheet.LAYERS -> {
-                            LayerPanel(
-                                project = state.project,
-                                selectedLayerId = state.selectedLayerId,
-                                onSelectLayer = { viewModel.selectLayer(it) },
-                                onUpdateLayer = { viewModel.updateLayer(it) },
-                                onClose = { viewModel.closeSheet() }
-                            )
-                        }
-                        ActiveSheet.PROPERTIES -> {
-                            if (selectedLayer != null) {
-                                PropertyPanel(
-                                    layer = selectedLayer,
-                                    isSimpleMode = state.isSimpleMode,
-                                    onUpdateTransform = { viewModel.updateLayerTransform(selectedLayer.id, it) },
-                                    onClose = { viewModel.closeSheet() }
-                                )
-                            }
-                        }
-                        ActiveSheet.KEYFRAMES -> {
-                            if (selectedLayer != null) {
-                                KeyframeEditor(
-                                    layer = selectedLayer,
-                                    currentTimeMs = state.currentTimeMs,
-                                    onUpdateLayer = { viewModel.updateLayer(it) },
-                                    onOpenCurveEditor = { viewModel.openSheet(ActiveSheet.CURVE_EDITOR) },
-                                    onClose = { viewModel.closeSheet() }
-                                )
-                            }
-                        }
-                        ActiveSheet.CURVE_EDITOR -> {
-                            if (selectedLayer != null) {
-                                CurveEditor(
-                                    layer = selectedLayer,
-                                    onApplyCurve = { /* bezier curve saved to keyframe */ },
-                                    onClose = { viewModel.closeSheet() }
-                                )
-                            }
-                        }
-                        ActiveSheet.SPEED_RAMP -> {
-                            if (selectedLayer != null) {
-                                SpeedRampEditor(
-                                    layer = selectedLayer,
-                                    onUpdateSpeedRamp = { viewModel.updateLayer(selectedLayer.copy(speedRamp = it)) },
-                                    onClose = { viewModel.closeSheet() }
-                                )
-                            }
-                        }
-                        ActiveSheet.PATH_EDITOR -> {
-                            if (selectedLayer != null) {
-                                PathEditor(
-                                    layer = selectedLayer,
-                                    onUpdatePath = { viewModel.updateLayer(selectedLayer.copy(pathAnimation = it)) },
-                                    onClose = { viewModel.closeSheet() }
-                                )
-                            }
-                        }
-                        ActiveSheet.EXPORT -> {
-                            ExportSheet(
-                                project = state.project,
-                                onStartExport = { config ->
-                                    viewModel.startExport(config)
-                                },
-                                onClose = { viewModel.closeSheet() }
-                            )
-                        }
+                        ActiveSheet.AUDIO_EDIT -> AudioSheet(
+                            selectedLayer = selectedLayer,
+                            onUpdateLayer = { viewModel.updateLayer(it) },
+                            onClose = { viewModel.closeSheet() }
+                        )
+                        ActiveSheet.EXPORT -> ExportSheet(
+                            project = state.project,
+                            onStartExport = { config ->
+                                viewModel.startExport(config)
+                                viewModel.closeSheet()
+                            },
+                            onClose = { viewModel.closeSheet() }
+                        )
                         else -> {}
                     }
                 }
             }
 
-            // Guided Tour Overlay for first-time use
+            if (state.activeSheet == ActiveSheet.SETTINGS) {
+                SettingsDialog(
+                    settingsStore = viewModel.settingsStore,
+                    onReplayTour = {
+                        viewModel.closeSheet()
+                        viewModel.replayGuidedTour()
+                    },
+                    onDismiss = { viewModel.closeSheet() }
+                )
+            }
+
+            if (showRenameDialog) {
+                AlertDialog(
+                    onDismissRequest = { showRenameDialog = false },
+                    title = { Text("Project Ka Naam Badlein") },
+                    text = {
+                        OutlinedTextField(
+                            value = renameInput,
+                            onValueChange = { renameInput = it },
+                            label = { Text("Project Name") },
+                            singleLine = true
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.renameProject(renameInput)
+                                showRenameDialog = false
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = NavyPrimaryDeep)
+                        ) {
+                            Text("Save")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showRenameDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+
             if (state.isTourVisible) {
                 GuidedTour(onDismiss = { viewModel.completeGuidedTour() })
             }

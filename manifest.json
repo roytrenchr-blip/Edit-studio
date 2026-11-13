@@ -1,0 +1,62 @@
+[
+  {
+    "id": "pack_viral_reels",
+    "name": "Viral Reels Motion Pack",
+    "description": "Zoom punch, whip pan, beat shake aur glitch presets short videos ke liye.",
+    "category": "Motion Packs",
+    "thumbnailUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/thumbs/viral_reels.png",
+    "downloadUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/packs/viral_reels.json",
+    "size": "1.2 MB",
+    "version": 2
+  },
+  {
+    "id": "pack_cinematic_luts",
+    "name": "Teal & Orange LUT Pack",
+    "description": "Cinema color grading .CUBE looks aur warm sunset tones.",
+    "category": "LUT Looks",
+    "thumbnailUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/thumbs/luts.png",
+    "downloadUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/packs/luts_pack.json",
+    "size": "2.4 MB",
+    "version": 1
+  },
+  {
+    "id": "tpl_lyric_status",
+    "name": "Lyric Glow Status Template",
+    "description": "Ready 9:16 template kinetic typography aur neon glow ke saath.",
+    "category": "Templates",
+    "thumbnailUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/thumbs/lyric_tpl.png",
+    "downloadUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/templates/lyric_status.json",
+    "size": "850 KB",
+    "version": 1
+  },
+  {
+    "id": "sfx_whoosh_pack",
+    "name": "Cinematic Whoosh & Boom SFX",
+    "description": "Transitions ke liye punchy risers, whooshes aur bass drops.",
+    "category": "Sound Effects",
+    "thumbnailUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/thumbs/sfx.png",
+    "downloadUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/audio/whoosh_sfx.json",
+    "size": "4.8 MB",
+    "version": 1
+  },
+  {
+    "id": "music_lofi_chill",
+    "name": "Desi Lo-Fi Chill Beat",
+    "description": "Vlogs aur montage ke liye smooth 90 BPM lo-fi track.",
+    "category": "Music",
+    "thumbnailUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/thumbs/lofi.png",
+    "downloadUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/audio/desi_lofi.json",
+    "size": "3.6 MB",
+    "version": 1
+  },
+  {
+    "id": "overlay_film_dust",
+    "name": "35mm Grain & Light Leaks",
+    "description": "Analog film scratches, subtle dust aur light flares.",
+    "category": "Overlays",
+    "thumbnailUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/thumbs/film_dust.png",
+    "downloadUrl": "https://raw.githubusercontent.com/editstudio/manifest/main/overlays/film_dust.json",
+    "size": "2.1 MB",
+    "version": 1
+  }
+]

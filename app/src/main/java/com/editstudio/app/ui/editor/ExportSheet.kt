@@ -25,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.editstudio.app.domain.FrameRate
@@ -35,11 +34,10 @@ import com.editstudio.app.export.ExportConfig
 import com.editstudio.app.export.ExportFormat
 import com.editstudio.app.ui.components.AppPrimaryButton
 import com.editstudio.app.ui.components.SliderRow
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
 @Composable
 fun ExportSheet(
@@ -49,14 +47,14 @@ fun ExportSheet(
     modifier: Modifier = Modifier
 ) {
     var format by remember { mutableStateOf(ExportFormat.MP4_H264) }
-    var resolution by remember { mutableStateOf(VideoResolution.FHD_1080P) }
-    var frameRate by remember { mutableStateOf(FrameRate.FPS_30) }
+    var resolution by remember { mutableStateOf(project.resolution) }
+    var frameRate by remember { mutableStateOf(project.frameRate) }
     var bitrateMbps by remember { mutableIntStateOf(12) }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(StudioSurface)
+            .background(NavySurface)
             .padding(16.dp)
     ) {
         Row(
@@ -67,16 +65,15 @@ fun ExportSheet(
             Text(
                 text = "Video Export Karein",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
+                color = NavyTextPrimary,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimary)
+                Icon(Icons.Default.Close, contentDescription = "Band Karein", tint = NavyTextPrimary)
             }
         }
 
-        // Format Selection
-        Text(text = "Format Chuno", style = MaterialTheme.typography.bodySmall, color = TextSecondary, modifier = Modifier.padding(top = 8.dp))
+        Text(text = "Format Chuno", style = MaterialTheme.typography.bodySmall, color = NavyTextSecondary, modifier = Modifier.padding(top = 8.dp))
         LazyRow(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -86,13 +83,12 @@ fun ExportSheet(
                     selected = format == fmt,
                     onClick = { format = fmt },
                     label = { Text(fmt.label) },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = StudioNeonPurple)
+                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = NavyPrimaryDeep)
                 )
             }
         }
 
-        // Resolution Selection (720p, 1080p, 4K)
-        Text(text = "Resolution (Quality)", style = MaterialTheme.typography.bodySmall, color = TextSecondary, modifier = Modifier.padding(top = 10.dp))
+        Text(text = "Resolution (Quality)", style = MaterialTheme.typography.bodySmall, color = NavyTextSecondary, modifier = Modifier.padding(top = 10.dp))
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -102,13 +98,12 @@ fun ExportSheet(
                     selected = resolution == res,
                     onClick = { resolution = res },
                     label = { Text(res.label) },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = StudioNeonPurple)
+                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = NavyPrimaryDeep)
                 )
             }
         }
 
-        // Frame Rate (24, 30, 60 fps)
-        Text(text = "Frame Rate (FPS)", style = MaterialTheme.typography.bodySmall, color = TextSecondary, modifier = Modifier.padding(top = 10.dp))
+        Text(text = "Frame Rate (FPS)", style = MaterialTheme.typography.bodySmall, color = NavyTextSecondary, modifier = Modifier.padding(top = 10.dp))
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -118,12 +113,11 @@ fun ExportSheet(
                     selected = frameRate == fps,
                     onClick = { frameRate = fps },
                     label = { Text(fps.label) },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = StudioNeonPurple)
+                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = NavyPrimaryDeep)
                 )
             }
         }
 
-        // Bitrate Slider
         SliderRow(
             label = "Bitrate (Clarity)",
             value = bitrateMbps.toFloat(),
@@ -133,7 +127,6 @@ fun ExportSheet(
             modifier = Modifier.padding(top = 6.dp)
         )
 
-        // Start Export Button
         AppPrimaryButton(
             text = "Export Shuru Karein (Gallery Mein Save Hoga)",
             icon = Icons.Default.FileDownload,

@@ -1,40 +1,35 @@
 package com.editstudio.app.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCard
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.TextPrimary
+import com.editstudio.app.ui.theme.NavyCard
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavyTextPrimary
 
-import androidx.compose.material3.ExperimentalMaterial3Api
-
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppIconButton(
     icon: ImageVector,
@@ -43,8 +38,9 @@ fun AppIconButton(
     modifier: Modifier = Modifier,
     tooltipText: String = contentDescription,
     isSelected: Boolean = false,
-    tint: Color = if (isSelected) StudioNeonPurple else TextPrimary,
-    containerColor: Color = if (isSelected) StudioNeonPurple.copy(alpha = 0.2f) else StudioCard
+    enabled: Boolean = true,
+    tint: Color = if (isSelected) NavyPrimary else NavyTextPrimary,
+    containerColor: Color = if (isSelected) NavyPrimaryDeep.copy(alpha = 0.35f) else NavyCard
 ) {
     val tooltipState = rememberTooltipState()
 
@@ -59,19 +55,22 @@ fun AppIconButton(
     ) {
         FilledTonalIconButton(
             onClick = onClick,
+            enabled = enabled,
             modifier = modifier
                 .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                 .testTag(contentDescription.lowercase().replace(" ", "_")),
             colors = IconButtonDefaults.filledTonalIconButtonColors(
                 containerColor = containerColor,
-                contentColor = tint
+                contentColor = tint,
+                disabledContainerColor = NavyCard.copy(alpha = 0.45f),
+                disabledContentColor = NavyTextPrimary.copy(alpha = 0.3f)
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -83,7 +82,8 @@ fun AppPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    containerColor: Color = NavyPrimaryDeep
 ) {
     Button(
         onClick = onClick,
@@ -92,15 +92,16 @@ fun AppPrimaryButton(
             .sizeIn(minHeight = 48.dp)
             .testTag(text.lowercase().replace(" ", "_")),
         colors = ButtonDefaults.buttonColors(
-            containerColor = StudioNeonPurple,
+            containerColor = containerColor,
             contentColor = Color.White
         ),
         shape = RoundedCornerShape(14.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
     ) {
         if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
         }
-        Text(text = text)
+        Text(text = text, fontWeight = FontWeight.SemiBold)
     }
 }

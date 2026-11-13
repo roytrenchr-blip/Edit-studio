@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -42,13 +39,14 @@ import com.editstudio.app.domain.Layer
 import com.editstudio.app.domain.PathAnimationConfig
 import com.editstudio.app.domain.PathPoint
 import com.editstudio.app.ui.components.AppPrimaryButton
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioGoldenAmber
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyAccentTeal
+import com.editstudio.app.ui.theme.NavyAmber
+import com.editstudio.app.ui.theme.NavyBg
+import com.editstudio.app.ui.theme.NavyBorder
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
 @Composable
 fun PathEditor(
@@ -63,7 +61,7 @@ fun PathEditor(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(StudioSurface)
+            .background(NavySurface)
             .padding(16.dp)
     ) {
         Row(
@@ -74,29 +72,28 @@ fun PathEditor(
             Text(
                 text = "Pen Tool Motion Path",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
+                color = NavyTextPrimary,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimary)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = NavyTextPrimary)
             }
         }
 
         Text(
             text = "Canvas par tap karke rasta (path) banayein",
             style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
+            color = NavyTextSecondary,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // Pen Path Drawing Canvas
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF0F0E18))
-                .border(1.dp, StudioBorder, RoundedCornerShape(12.dp))
+                .background(NavyBg)
+                .border(1.dp, NavyBorder, RoundedCornerShape(12.dp))
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
                         val newPt = PathPoint(offset.x, offset.y, offset.x, offset.y)
@@ -114,25 +111,24 @@ fun PathEditor(
                             lineTo(points[i].x, points[i].y)
                         }
                     }
-                    drawPath(path = path, color = StudioCyberCyan, style = Stroke(width = 3.5f))
+                    drawPath(path = path, color = NavyPrimary, style = Stroke(width = 3.5f))
                 }
                 for (pt in points) {
-                    drawCircle(color = StudioGoldenAmber, radius = 6f, center = Offset(pt.x, pt.y))
+                    drawCircle(color = NavyAmber, radius = 6f, center = Offset(pt.x, pt.y))
                 }
             }
         }
 
-        // Auto Orient & Loop toggles
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Auto-Orient (Raste ke mudav par ghoomein)", color = TextPrimary)
+            Text("Auto-Orient (Raste ke mudav par ghoomein)", color = NavyTextPrimary)
             Switch(
                 checked = config.autoOrient,
                 onCheckedChange = { config = config.copy(autoOrient = it) },
-                colors = SwitchDefaults.colors(checkedThumbColor = StudioCyberCyan)
+                colors = SwitchDefaults.colors(checkedThumbColor = NavyAccentTeal)
             )
         }
 
@@ -141,11 +137,11 @@ fun PathEditor(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Loop Motion Path", color = TextPrimary)
+            Text("Loop Motion Path", color = NavyTextPrimary)
             Switch(
                 checked = config.isLooping,
                 onCheckedChange = { config = config.copy(isLooping = it) },
-                colors = SwitchDefaults.colors(checkedThumbColor = StudioNeonPurple)
+                colors = SwitchDefaults.colors(checkedThumbColor = NavyPrimary)
             )
         }
 

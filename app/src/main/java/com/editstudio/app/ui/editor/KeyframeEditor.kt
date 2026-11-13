@@ -1,6 +1,7 @@
 package com.editstudio.app.ui.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,15 +9,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,21 +32,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.editstudio.app.domain.AnimProperty
 import com.editstudio.app.domain.Keyframe
 import com.editstudio.app.domain.KeyframeTrack
 import com.editstudio.app.domain.Layer
 import com.editstudio.app.engine.Keyframes
-import com.editstudio.app.ui.components.AppPrimaryButton
-import com.editstudio.app.ui.theme.KeyframeDiamond
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioElectricCoral
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
+import com.editstudio.app.ui.theme.NavyAccentTeal
+import com.editstudio.app.ui.theme.NavyAmber
+import com.editstudio.app.ui.theme.NavyCoral
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
 
 @Composable
 fun KeyframeEditor(
@@ -59,12 +63,12 @@ fun KeyframeEditor(
     val layerTimeMs = (currentTimeMs - layer.startTimeMs).coerceAtLeast(0L)
 
     val currentTrack = layer.keyframeTracks.firstOrNull { it.property == selectedProperty }
-    val hasKeyframeAtPlayhead = currentTrack?.keyframes?.any { it.timeMs == layerTimeMs } == true
+    val hasKeyframeAtPlayhead = Keyframes.hasKeyframeNear(layer, selectedProperty, layerTimeMs)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(StudioSurface)
+            .background(NavySurface)
             .padding(16.dp)
     ) {
         Row(
@@ -75,15 +79,37 @@ fun KeyframeEditor(
             Text(
                 text = "Pro Mode: Keyframes & Curves",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
+                color = NavyTextPrimary,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimary)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = NavyTextPrimary)
             }
         }
 
-        // Diamond Keyframe Status
+        // Property selector chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(top = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            listOf(
+                AnimProperty.POSITION_X,
+                AnimProperty.POSITION_Y,
+                AnimProperty.SCALE_X,
+                AnimProperty.ROTATION,
+                AnimProperty.OPACITY
+            ).forEach { prop ->
+                FilterChip(
+                    selected = selectedProperty == prop,
+                    onClick = { selectedProperty = prop },
+                    label = { Text(prop.label, fontSize = 11.sp) }
+                )
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -92,44 +118,26 @@ fun KeyframeEditor(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(14.dp)
+                        .rotate(45f)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(KeyframeDiamond)
+                        .background(NavyAmber)
                 )
                 Text(
-                    text = "${selectedProperty.label} Keyframe @ ${layerTimeMs}ms",
+                    text = "${selectedProperty.label} @ ${layerTimeMs}ms",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = StudioCyberCyan,
+                    color = NavyPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
-            // Add or Remove Keyframe diamond button
             Button(
                 onClick = {
-                    val tracks = layer.keyframeTracks.toMutableList()
-                    val existingTrackIndex = tracks.indexOfFirst { it.property == selectedProperty }
-                    if (hasKeyframeAtPlayhead) {
-                        // Remove
-                        if (existingTrackIndex != -1) {
-                            val updatedKfs = tracks[existingTrackIndex].keyframes.filter { it.timeMs != layerTimeMs }
-                            tracks[existingTrackIndex] = tracks[existingTrackIndex].copy(keyframes = updatedKfs)
-                        }
-                    } else {
-                        // Add
-                        val currentVal = Keyframes.evaluateProperty(layer, selectedProperty, layerTimeMs, 1.0f)
-                        val newKf = Keyframe(timeMs = layerTimeMs, value = currentVal)
-                        if (existingTrackIndex != -1) {
-                            val updatedKfs = (tracks[existingTrackIndex].keyframes + newKf).sortedBy { it.timeMs }
-                            tracks[existingTrackIndex] = tracks[existingTrackIndex].copy(keyframes = updatedKfs)
-                        } else {
-                            tracks.add(KeyframeTrack(property = selectedProperty, keyframes = listOf(newKf)))
-                        }
-                    }
-                    onUpdateLayer(layer.copy(keyframeTracks = tracks))
+                    val curVal = Keyframes.evaluateProperty(layer, selectedProperty, layerTimeMs, 1.0f)
+                    onUpdateLayer(Keyframes.toggleKeyframe(layer, selectedProperty, layerTimeMs, curVal))
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (hasKeyframeAtPlayhead) StudioElectricCoral else StudioNeonPurple
+                    containerColor = if (hasKeyframeAtPlayhead) NavyCoral else NavyPrimaryDeep
                 )
             ) {
                 Icon(
@@ -141,7 +149,6 @@ fun KeyframeEditor(
             }
         }
 
-        // Smooth Keyframes & Curve Editor actions
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -156,12 +163,12 @@ fun KeyframeEditor(
                 },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Smooth Keyframes", color = StudioCyberCyan)
+                Text("Smooth Keyframes", color = NavyPrimary)
             }
 
             Button(
                 onClick = onOpenCurveEditor,
-                colors = ButtonDefaults.buttonColors(containerColor = StudioCyberCyan, contentColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = NavyAccentTeal, contentColor = Color.Black),
                 modifier = Modifier.weight(1f)
             ) {
                 Icon(Icons.Default.ShowChart, contentDescription = null, modifier = Modifier.size(18.dp))

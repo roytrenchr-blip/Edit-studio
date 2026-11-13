@@ -2,27 +2,22 @@ package com.editstudio.app.ui.store
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,14 +32,14 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.editstudio.app.store.DownloadStatus
 import com.editstudio.app.store.StoreItem
-import com.editstudio.app.ui.theme.StudioBorder
-import com.editstudio.app.ui.theme.StudioCard
-import com.editstudio.app.ui.theme.StudioCyberCyan
-import com.editstudio.app.ui.theme.StudioGoldenAmber
-import com.editstudio.app.ui.theme.StudioNeonPurple
-import com.editstudio.app.ui.theme.StudioSurface
-import com.editstudio.app.ui.theme.TextPrimary
-import com.editstudio.app.ui.theme.TextSecondary
+import com.editstudio.app.ui.theme.NavyAccentTeal
+import com.editstudio.app.ui.theme.NavyBorder
+import com.editstudio.app.ui.theme.NavyCard
+import com.editstudio.app.ui.theme.NavyPrimary
+import com.editstudio.app.ui.theme.NavyPrimaryDeep
+import com.editstudio.app.ui.theme.NavySurface
+import com.editstudio.app.ui.theme.NavyTextPrimary
+import com.editstudio.app.ui.theme.NavyTextSecondary
 
 @Composable
 fun StoreItemCard(
@@ -61,8 +56,8 @@ fun StoreItemCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(StudioCard)
-            .border(1.dp, StudioBorder, RoundedCornerShape(16.dp))
+            .background(NavyCard)
+            .border(1.dp, NavyBorder, RoundedCornerShape(16.dp))
             .padding(14.dp)
     ) {
         Row(
@@ -70,14 +65,13 @@ fun StoreItemCard(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Thumbnail
             Box(
                 modifier = Modifier
-                    .size(76.dp)
+                    .size(72.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         Brush.linearGradient(
-                            listOf(StudioNeonPurple.copy(alpha = 0.4f), StudioCyberCyan.copy(alpha = 0.4f))
+                            listOf(NavyPrimaryDeep.copy(alpha = 0.6f), NavyAccentTeal.copy(alpha = 0.5f))
                         )
                     ),
                 contentAlignment = Alignment.Center
@@ -85,11 +79,10 @@ fun StoreItemCard(
                 AsyncImage(
                     model = item.thumbnailUrl,
                     contentDescription = item.name,
-                    modifier = Modifier.size(76.dp).clip(RoundedCornerShape(12.dp))
+                    modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp))
                 )
             }
 
-            // Info
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -97,7 +90,7 @@ fun StoreItemCard(
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleSmall,
-                    color = TextPrimary,
+                    color = NavyTextPrimary,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -105,7 +98,7 @@ fun StoreItemCard(
                 Text(
                     text = item.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
+                    color = NavyTextSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -117,31 +110,30 @@ fun StoreItemCard(
                     Text(
                         text = item.category,
                         style = MaterialTheme.typography.labelSmall,
-                        color = StudioCyberCyan,
+                        color = NavyPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = "• ${item.size}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
+                        color = NavyTextSecondary
                     )
                 }
             }
 
-            // Download or Action Button
             Column(horizontalAlignment = Alignment.End) {
                 if (isDownloading) {
                     CircularProgressIndicator(
                         progress = { downloadStatus?.progress ?: 0.1f },
                         modifier = Modifier.size(36.dp),
-                        color = StudioCyberCyan,
+                        color = NavyPrimary,
                         strokeWidth = 3.dp
                     )
                 } else if (isInstalled) {
                     if (item.category == "Templates") {
                         Button(
                             onClick = onUseTemplate,
-                            colors = ButtonDefaults.buttonColors(containerColor = StudioCyberCyan, contentColor = Color.Black),
+                            colors = ButtonDefaults.buttonColors(containerColor = NavyAccentTeal, contentColor = Color.Black),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Text("Use Template", fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -152,17 +144,17 @@ fun StoreItemCard(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(StudioSurface)
+                                .background(NavySurface)
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Icon(Icons.Default.Check, contentDescription = null, tint = StudioCyberCyan, modifier = Modifier.size(16.dp))
-                            Text("Installed", color = StudioCyberCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = NavyAccentTeal, modifier = Modifier.size(16.dp))
+                            Text("Installed", color = NavyAccentTeal, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 } else {
                     Button(
                         onClick = onDownload,
-                        colors = ButtonDefaults.buttonColors(containerColor = StudioNeonPurple),
+                        colors = ButtonDefaults.buttonColors(containerColor = NavyPrimaryDeep),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
