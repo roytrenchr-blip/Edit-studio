@@ -1,4 +1,4 @@
-name: Build Edit Studio APK
+name: Build Edit Studio APK & ZIP
 
 on:
   push:
@@ -36,17 +36,27 @@ jobs:
       - name: Build Debug APK
         run: gradle :app:assembleDebug
 
-      - name: Upload APK Artifact
+      - name: Package APK and Source ZIP
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/EditStudio-debug.apk
+          zip -j dist/EditStudio-debug-apk.zip dist/EditStudio-debug.apk
+          zip -r dist/EditStudio-source.zip . -x ".git/*" ".gradle/*" "app/build/*" "dist/*"
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: EditStudio-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: EditStudio-APK-and-ZIP
+          path: dist/*
 
-      - name: Publish APK to GitHub Releases
+      - name: Publish APK & ZIP to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0-${{ github.run_number }}
-          name: Edit Studio APK v1.0.${{ github.run_number }}
-          files: app/build/outputs/apk/debug/app-debug.apk
+          name: Edit Studio v1.0.${{ github.run_number }} (APK + ZIP)
+          files: |
+            dist/EditStudio-debug.apk
+            dist/EditStudio-debug-apk.zip
+            dist/EditStudio-source.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
